@@ -2,12 +2,15 @@ import os
 import shutil
 import random
 
+# Define project base directory (adjust as needed)
+project_base_dir = os.path.abspath(os.path.dirname(__file__))
+
 # Paths
-dataset_path = 'C:/Users/asjos/Desktop/coding/Patch/raw'
-train_before_dir = 'C:/Users/asjos/Desktop/coding/Patch/dataset/train/before'
-train_after_dir = 'C:/Users/asjos/Desktop/coding/Patch/dataset/train/after'
-val_before_dir = 'C:/Users/asjos/Desktop/coding/Patch/dataset/validation/before'
-val_after_dir = 'C:/Users/asjos/Desktop/coding/Patch/dataset/validation/after'
+dataset_path = os.path.join(project_base_dir, 'raw')
+train_before_dir = os.path.join(project_base_dir, 'dataset/train/before')
+train_after_dir = os.path.join(project_base_dir, 'dataset/train/after')
+val_before_dir = os.path.join(project_base_dir, 'dataset/validation/before')
+val_after_dir = os.path.join(project_base_dir, 'dataset/validation/after')
 
 # Create directories if they do not exist
 os.makedirs(train_before_dir, exist_ok=True)
