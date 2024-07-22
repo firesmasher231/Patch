@@ -1,0 +1,3 @@
+model
+hedge_cutting_detector.h5
+*.h5
