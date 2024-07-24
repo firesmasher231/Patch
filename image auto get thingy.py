@@ -77,7 +77,7 @@ def generate_random_image():
 
 
 # Number of agents (threads) to use
-num_agents = 20
+num_agents = 200
 
 # Create a ThreadPoolExecutor with the specified number of agents
 with concurrent.futures.ThreadPoolExecutor(max_workers=num_agents) as executor:
