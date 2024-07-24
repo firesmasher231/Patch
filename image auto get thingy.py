@@ -1,6 +1,6 @@
 import os
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import shutil
 
@@ -15,6 +15,7 @@ class ImageLabeler:
         self.process_even = process_even
         self.setup_gui()
         self.show_image()
+        self.root.focus_force()  # Ensure the root window has focus to capture key events
 
     def setup_gui(self):
         self.root.title("Image Labeler")
@@ -37,10 +38,10 @@ class ImageLabeler:
         self.skip_btn = tk.Button(self.label_frame, text="Skip (0)", command=self.skip_image)
         self.skip_btn.grid(row=0, column=3)
 
-        self.root.bind('1', lambda event: self.label_image('well_maintained'))
-        self.root.bind('2', lambda event: self.label_image('partially_maintained'))
-        self.root.bind('3', lambda event: self.label_image('overgrown'))
-        self.root.bind('0', lambda event: self.skip_image())
+        self.root.bind('<Key-1>', lambda event: self.label_image('well_maintained'))
+        self.root.bind('<Key-2>', lambda event: self.label_image('partially_maintained'))
+        self.root.bind('<Key-3>', lambda event: self.label_image('overgrown'))
+        self.root.bind('<Key-0>', lambda event: self.skip_image())
 
     def show_image(self):
         while self.index < len(self.images):
@@ -79,10 +80,10 @@ def main():
     # image_folder = filedialog.askdirectory(title="Select Image Folder")
     # output_folder = filedialog.askdirectory(title="Select Output Folder")
     image_folder = "images"
-    output_folder = "output"
-    
+    output_folder = "labeled_images"
+
     # Prompt user to choose whether to process even or odd images
-    process_even = tk.messagebox.askyesno("Choose Processing Mode", "Process even-numbered images?")
+    process_even = messagebox.askyesno("Choose Processing Mode", "Process even-numbered images?")
 
     if image_folder and output_folder:
         app = ImageLabeler(root, image_folder, output_folder, process_even)
