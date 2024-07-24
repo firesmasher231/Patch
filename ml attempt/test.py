@@ -1,12 +1,11 @@
 import os
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 import cv2
 
 # Load the trained model
-model = load_model("hedge_cutting_detector.h5")
+model = tf.keras.models.load_model("model/hedge_cutting_detector.keras")
 
 
 # Function to preprocess images
