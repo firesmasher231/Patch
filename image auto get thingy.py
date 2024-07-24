@@ -85,3 +85,4 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=num_agents) as executor:
     # Generate 1000 random images with random coordinates using multiple threads
     while True:
         executor.submit(generate_random_image)
+
