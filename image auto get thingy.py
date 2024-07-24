@@ -1,87 +1,92 @@
-import argparse
-import random
-import requests
 import os
+import tkinter as tk
+from tkinter import filedialog
+from PIL import Image, ImageTk
+import shutil
 
-import concurrent.futures
+class ImageLabeler:
+    def __init__(self, root, image_folder, output_folder, process_even):
+        self.root = root
+        self.image_folder = image_folder
+        self.output_folder = output_folder
+        self.images = [f for f in os.listdir(image_folder) if f.lower().endswith(('png', 'jpg', 'jpeg'))]
+        self.images = sorted(self.images)  # Sort images to ensure consistent ordering
+        self.index = 0
+        self.process_even = process_even
+        self.setup_gui()
+        self.show_image()
 
+    def setup_gui(self):
+        self.root.title("Image Labeler")
 
-def generate_random_image():
-    # Generate random coordinates for location
-    xmin = random.uniform(550000, 560000)
-    ymin = random.uniform(650000, 660000)
-    xmax = xmin + random.uniform(100, 500)
-    ymax = ymin + random.uniform(100, 500)
+        self.image_panel = tk.Label(self.root)
+        self.image_panel.pack()
 
-    # Define the variables
-    url = "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task/execute"
-    headers = {
-        "accept": "*/*",
-        "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
-        "content-type": "application/x-www-form-urlencoded",
-        "dnt": "1",
-        "origin": "https://webapps.geohive.ie",
-        "priority": "u=1, i",
-        "referer": "https://webapps.geohive.ie/",
-        "sec-ch-ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-    }
+        self.label_frame = tk.Frame(self.root)
+        self.label_frame.pack()
 
-    data = {
-        "f": "json",
-        "Web_Map_as_JSON": (
-            '{"mapOptions":{"showAttribution":true,"extent":{"xmin":'
-            + str(xmin)
-            + ',"ymin":'
-            + str(ymin)
-            + ',"xmax":'
-            + str(xmax)
-            + ',"ymax":'
-            + str(ymax)
-            + ',"spatialReference":{"wkid":2157,"latestWkid":2157}},"spatialReference":{"wkid":2157,"latestWkid":2157},"scale":1000},"operationalLayers":[{"id":"layer2","title":"layer2","opacity":1,"minScale":0,"maxScale":0,"url":"https://utility.arcgis.com/usrsvcs/servers/fa6c480e60fd48a2959d066e3e0a9b96/rest/services/MapGenieImagery2013to2018ITM/MapServer"},{"id":"Countries2020AdministrativeUnits_3013","title":"Countries 2020 - Administrative Units","opacity":0.7,"minScale":0,"maxScale":0,"layerDefinition":{"drawingInfo":{"renderer":{"type":"simple","label":"","description":"","symbol":{"color":[214,214,214,255],"outline":{"color":[214,214,214,255],"width":0.4,"type":"esriSLS","style":"esriSLSSolid"},"type":"esriSFS","style":"esriSFSSolid"}}},"definitionExpression":"(OBJECTID <> 97) AND (OBJECTID <> 259)"},"url":"https://services1.arcgis.com/eNO7HHeQ3rUcBllm/arcgis/rest/services/Countries2020AdministrativeUnits/FeatureServer/0"}],"exportOptions":{"outputSize":[500,500],"dpi":96},"layoutOptions":{"titleText":"","authorText":"","copyrightText":"","customTextElements":[{"Date":"23/07/2024, 16:27:06"}],"scaleBarOptions":{"metricUnit":"esriKilometers","metricLabel":"km","nonMetricUnit":"esriMiles","nonMetricLabel":"mi"},"legendOptions":{"operationalLayers":[]}}}'
-        ),
-        "Format": "JPG",
-        "Layout_Template": "MAP_ONLY",
-        "printFlag": "true",
-    }
-    # Make the POST request
-    response = requests.post(url, headers=headers, data=data)
+        self.well_maintained_btn = tk.Button(self.label_frame, text="Well Maintained (1)", command=lambda: self.label_image('well_maintained'))
+        self.well_maintained_btn.grid(row=0, column=0)
 
-    # Check the response status
-    if response.status_code == 200:
-        response_json = response.json()
-        # Extract the image URL from the response
-        image_url = response_json["results"][0]["value"]["url"]
-        print(f"Image URL: {image_url}")
+        self.partially_maintained_btn = tk.Button(self.label_frame, text="Partially Maintained (2)", command=lambda: self.label_image('partially_maintained'))
+        self.partially_maintained_btn.grid(row=0, column=1)
 
-        # Create a folder to save the images
-        os.makedirs("images", exist_ok=True)
+        self.overgrown_btn = tk.Button(self.label_frame, text="Overgrown (3)", command=lambda: self.label_image('overgrown'))
+        self.overgrown_btn.grid(row=0, column=2)
+        
+        self.skip_btn = tk.Button(self.label_frame, text="Skip (0)", command=self.skip_image)
+        self.skip_btn.grid(row=0, column=3)
 
-        # Download and save the image
-        image_response = requests.get(image_url)
+        self.root.bind('1', lambda event: self.label_image('well_maintained'))
+        self.root.bind('2', lambda event: self.label_image('partially_maintained'))
+        self.root.bind('3', lambda event: self.label_image('overgrown'))
+        self.root.bind('0', lambda event: self.skip_image())
 
-        if image_response.status_code == 200:
-            image_filename = f"images/downloaded_image_{random.randint(1, 100000)}.jpg"
-            with open(image_filename, "wb") as file:
-                file.write(image_response.content)
-            print(f"Image downloaded successfully: {image_filename}")
+    def show_image(self):
+        while self.index < len(self.images):
+            if self.process_even and self.index % 2 == 0:
+                break
+            if not self.process_even and self.index % 2 != 0:
+                break
+            self.index += 1
+        if self.index < len(self.images):
+            image_path = os.path.join(self.image_folder, self.images[self.index])
+            image = Image.open(image_path)
+            image = image.resize((800, 600), Image.LANCZOS)
+            image = ImageTk.PhotoImage(image)
+            self.image_panel.configure(image=image)
+            self.image_panel.image = image
         else:
-            print("Failed to download the image.")
-    else:
-        print("Failed to get a valid response from the server.")
+            self.root.quit()
 
+    def label_image(self, label):
+        if self.index < len(self.images):
+            image_name = self.images[self.index]
+            label_folder = os.path.join(self.output_folder, label)
+            if not os.path.exists(label_folder):
+                os.makedirs(label_folder)
+            shutil.move(os.path.join(self.image_folder, image_name), os.path.join(label_folder, image_name))
+            self.index += 1
+            self.show_image()
 
-# Number of agents (threads) to use
-num_agents = 200
+    def skip_image(self):
+        if self.index < len(self.images):
+            self.index += 1
+            self.show_image()
 
-# Create a ThreadPoolExecutor with the specified number of agents
-with concurrent.futures.ThreadPoolExecutor(max_workers=num_agents) as executor:
-    print("Generating random images...")
-    # Generate 1000 random images with random coordinates using multiple threads
-    while True:
-        executor.submit(generate_random_image)
+def main():
+    root = tk.Tk()
+    # image_folder = filedialog.askdirectory(title="Select Image Folder")
+    # output_folder = filedialog.askdirectory(title="Select Output Folder")
+    image_folder = "images"
+    output_folder = "output"
+    
+    # Prompt user to choose whether to process even or odd images
+    process_even = tk.messagebox.askyesno("Choose Processing Mode", "Process even-numbered images?")
+
+    if image_folder and output_folder:
+        app = ImageLabeler(root, image_folder, output_folder, process_even)
+        root.mainloop()
+
+if __name__ == "__main__":
+    main()
