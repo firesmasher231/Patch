@@ -5,6 +5,7 @@ from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Flatten, Dropout
 from tensorflow.keras.optimizers import Adam
+import numpy as np
 
 # Set the paths
 base_dir = "labeled_images"  # Path to your labeled dataset
@@ -16,16 +17,24 @@ IMG_HEIGHT = 224
 IMG_WIDTH = 224
 BATCH_SIZE = 32
 
+# Custom preprocessing function to convert grayscale to RGB
+def preprocess_grayscale_to_rgb(image):
+    if image.shape[-1] == 1:
+        image = np.repeat(image, 3, axis=-1)  # Convert grayscale to RGB by repeating the channel
+    image = preprocess_input(image)  # Apply VGG16 preprocessing
+    return image
+
 # Data augmentation and preprocessing
 train_datagen = ImageDataGenerator(
-    preprocessing_function=preprocess_input,
+    preprocessing_function=preprocess_grayscale_to_rgb,
     validation_split=0.2,
-    rotation_range=20,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
+    rotation_range=30,
+    width_shift_range=0.3,
+    height_shift_range=0.3,
+    shear_range=0.3,
+    zoom_range=0.3,
     horizontal_flip=True,
+    vertical_flip=True,
     fill_mode="nearest",
 )
 
@@ -35,6 +44,7 @@ train_generator = train_datagen.flow_from_directory(
     batch_size=BATCH_SIZE,
     class_mode="categorical",
     subset="training",
+    color_mode="rgb",  # Change this to 'rgb'
 )
 
 val_generator = train_datagen.flow_from_directory(
@@ -43,6 +53,7 @@ val_generator = train_datagen.flow_from_directory(
     batch_size=BATCH_SIZE,
     class_mode="categorical",
     subset="validation",
+    color_mode="rgb",  # Change this to 'rgb'
 )
 
 # Load the VGG16 model without the top layers
@@ -58,13 +69,9 @@ for layer in base_model.layers:
 x = Flatten()(base_model.output)
 x = Dense(512, activation="relu")(x)
 x = Dropout(0.5)(x)
-output = Dense(3, activation="softmax")(
-    x
-)  # 3 classes: well maintained, partially maintained, overgrown
-
+output = Dense(3, activation="softmax")(x)  # 3 classes: well maintained, partially maintained, overgrown
 
 model = Model(inputs=base_model.input, outputs=output)
-
 
 # Compile the model
 model.compile(
@@ -95,15 +102,15 @@ model.save("hedge_classifier_vgg16.h5")
 
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
-import numpy as np
 
 # Load the model
 model = load_model("hedge_classifier_vgg16.h5")
 
 # Load and preprocess a new image
 image_path = "test2.jpg"
-image = load_img(image_path, target_size=(IMG_HEIGHT, IMG_WIDTH))
+image = load_img(image_path, target_size=(IMG_HEIGHT, IMG_WIDTH), color_mode='grayscale')
 image = img_to_array(image)
+image = np.repeat(image, 3, axis=-1)  # Convert grayscale to RGB
 image = preprocess_input(image)
 image = np.expand_dims(image, axis=0)
 

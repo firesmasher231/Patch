@@ -16,9 +16,15 @@ IMG_HEIGHT = 224
 IMG_WIDTH = 224
 BATCH_SIZE = 32
 
+# Custom preprocessing function to convert grayscale to RGB
+def preprocess_grayscale_to_rgb(image):
+    image = tf.image.grayscale_to_rgb(image)  # Convert grayscale to RGB
+    return preprocess_input(image)
+
 # Data augmentation and preprocessing
 train_datagen = ImageDataGenerator(
-    preprocessing_function=preprocess_input,
+    # preprocessing_function=preprocess_input,
+    preprocessing_function=preprocess_grayscale_to_rgb,
     validation_split=0.2,
     rotation_range=20,
     width_shift_range=0.2,
@@ -35,6 +41,7 @@ train_generator = train_datagen.flow_from_directory(
     batch_size=BATCH_SIZE,
     class_mode="categorical",
     subset="training",
+    color_mode="grayscale",
 )
 
 val_generator = train_datagen.flow_from_directory(
@@ -43,6 +50,7 @@ val_generator = train_datagen.flow_from_directory(
     batch_size=BATCH_SIZE,
     class_mode="categorical",
     subset="validation",
+    color_mode="grayscale",
 )
 
 # Load the VGG16 model without the top layers
