@@ -66,7 +66,7 @@ def generate_random_image():
         image_response = requests.get(image_url)
 
         if image_response.status_code == 200:
-            image_filename = f"images/downloaded_image_{random.randint(1, 100000)}.jpg"
+            image_filename = f"images/images25july/downloaded_image_{random.randint(100000, 1000000)}.jpg"
             with open(image_filename, "wb") as file:
                 file.write(image_response.content)
             print(f"Image downloaded successfully: {image_filename}")
