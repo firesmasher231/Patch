@@ -1,0 +1,23 @@
+.header {
+    height: 90px;
+    transition: all 0.5s;
+    z-index: 997;
+    background: #c8c3c3;
+}
+.header.sticked {
+    height: 70px;
+}
+
+.header .logo img {
+    max-height: 40px;
+    margin-right: 6px;
+}
+
+.header .logo h1 {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--color-default);
+
+    font-family: var(--font-primary);
+}
+
